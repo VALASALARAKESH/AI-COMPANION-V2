@@ -13,7 +13,7 @@ const inter = Inter({ subsets: ['latin'] })
 
 
 export const metadata: Metadata = {
-    title: 'AI COMPANION',
+    title: 'CUBEOPS AI COMPANION',
     description: 'AI companions, chat with your dream companion, create unique characters',
 }
 
@@ -32,9 +32,7 @@ export default function RootLayout({
                     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
                         <ProModal />
                         <GoogleAnalytics />
-
                         {children}
-
                         <Toaster />
                     </ThemeProvider>
                 </body>
