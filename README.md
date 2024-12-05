@@ -2,7 +2,7 @@
 
 ## Conversational Universe of Behavioral and Emotion Optimization for Personality Simulation (CUBEOPS)
 
-This repository contains the source code for building a SaaS AI Platform using **Next.js 13**, **React**, **Tailwind CSS**, **TypeScript**, **Prisma**, **PostgreSQL**, and **Stripe**.
+This repository contains the source code for building a SaaS AI-COMPANION Platform using **Next.js 13**, **React**, **Tailwind CSS**, **TypeScript**, **Prisma**, **PostgreSQL**, and **Stripe**.
 
 ---
 
