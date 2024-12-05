@@ -1,90 +1,182 @@
-# Build a SaaS AI Companion with Next.js 13, React, Tailwind, Prisma, Stripe | Full Tutorial 2023
+# CUBOPS AI-COMPANION
 
-Modified for Steamship
+## Conversational Universe of Behavioral and Emotion Optimization for Personality Simulation (CUBEOPS)
 
+This repository contains the source code for building a SaaS AI Platform using **Next.js 13**, **React**, **Tailwind CSS**, **TypeScript**, **Prisma**, **PostgreSQL**, and **Stripe**.
 
-This is a repository for Build a SaaS AI Platform with Next.js 13, React, Tailwind, Prisma, Stripe | Full Tutorial 2023.
+---
 
+## Table of Contents
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+  - [Setup Prisma](#setup-prisma)
+  - [Start the App](#start-the-app)
+- [Environment Variables](#environment-variables)
+- [Available Commands](#available-commands)
+- [Contributing](#contributing)
+- [License](#license)
+- [Contact](#contact)
 
-Features:
+---
 
-- Tailwind design
-- Tailwind animations and effects
-- Full responsiveness
-- Clerk Authentication (Email, Google, 9+ Social Logins)
-- Client form validation and handling using react-hook-form
-- Server error handling using react-toast
-- Page loading state
-- Stripe monthly subscription
-- How to write POST, DELETE, and GET routes in route handlers (app/api)
-- How to fetch data in server react components by directly accessing database (WITHOUT API! like Magic!)
-- How to handle relations between Server and Child components!
-- How to reuse layouts
-- Folder structure in Next 13 App Router
+## Features
 
-### Prerequisites
+### **Tailwind Design**
+- Fully styled using **Tailwind CSS**.
+- Integrated with **Tailwind animations** for a polished user interface.
 
-**Node version 18.x.x**
+### **Full Responsiveness**
+- Optimized for **seamless display** across devices, ensuring a great user experience.
 
+### **Authentication**
+- Utilizes **Clerk Authentication** with support for **Email** and **Google**.
 
+### **Form Validation**
+- Implements **react-hook-form** for intuitive client-side form validation and management.
 
-### Install packages
+### **Error Handling**
+- Includes **react-toast** for server-side error handling and user notifications.
 
-```shell
-npm i
+### **Page Loading State**
+- Ensures a smooth user experience with optimized page loading indicators.
+
+### **Subscription Management**
+- Fully integrated with **Stripe** to handle subscription payments, including:
+  - Monthly subscriptions
+  - Token-based top-ups
+  - Time-based call plans
+
+### **Route Handlers**
+- Implements `POST`, `GET`, and `DELETE` API endpoints using **Next.js route handlers**.
+
+### **Server-Side Data Fetching**
+- Fetches data directly in server-side React components, eliminating the need for intermediate APIs.
+
+### **Component Relationships**
+- Manages relationships between **parent** and **child components** efficiently.
+
+### **Layout Reusability**
+- Features reusable layouts for consistent and modular application design.
+
+### **Next.js 13 App Router**
+- Organizes the application using the **Next.js 13 App Router** and modern folder structure.
+
+### **Image Uploads**
+- Integrated with **Cloudinary** for secure and efficient image hosting and management.
+
+### **LLM Integration**
+- Utilizes **OpenAI APIs** for advanced AI-driven features, such as personality simulation.
+
+---
+
+## Prerequisites
+- **Node.js**: Ensure you have **Node.js 18.x.x** installed.
+- **PostgreSQL Database**: Set up a **cloud-hosted PostgreSQL** database for application data.
+- **Stripe Account**: Obtain necessary API keys for subscription management.
+- **Clerk Account**: Configure Clerk for authentication.
+
+---
+
+## Installation
+
+### **1. Clone the Repository**
+```bash
+git clone https://github.com/your-username/CUBOPS-AI-COMPANION.git
+cd CUBOPS-AI-COMPANION
 ```
 
-### Setup .env file
-
-
-```js
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
-
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
-
-
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=
-NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=
-
-DATABASE_URL=
-
-STRIPE_API_KEY=
-STRIPE_WEBHOOK_SECRET=
-
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
-
-STEAMSHIP_API_KEY
+### **2. Install Packages**
+Install all dependencies using `npm`:
+```bash
+npm install
 ```
 
-### Setup Prisma
+---
 
-Add MySQL Database (I used PlanetScale)
+### **Setup Prisma**
 
-```shell
-npx prisma db push
+1. Generate Prisma Client:
+   ```bash
+   npx prisma generate
+   ```
 
-```
+2. Push the database schema to your PostgreSQL database:
+   ```bash
+   npx prisma db push
+   ```
 
-Seed categories:
-```shell
-node scripts/seed.ts
-```
+3. Seed the database with initial data:
+   ```bash
+   node scripts/seed_phone_voices_bolna.js
+   ```
 
+---
 
-### Start the app
+### **Start the App**
 
-```shell
+Run the development server:
+```bash
 npm run dev
 ```
 
-## Available commands
+The application will be available at [http://localhost:3000](http://localhost:3000).
 
-Running commands with npm `npm run [command]`
+---
 
-| command         | description                              |
-| :-------------- | :--------------------------------------- |
-| `dev`           | Starts a development instance of the app |
+## Environment Variables
+
+Create a `.env` file in the root directory and add the following variables:
+
+| Variable Name                          | Description                                                                 |
+|----------------------------------------|-----------------------------------------------------------------------------|
+| `TOKENS_TOPUP_PRICE_ID`                | Price ID for tokens top-up.                                                |
+| `CALLTIME_TOPUP_5_PRICE_ID`            | Price ID for 5 minutes call time top-up.                                   |
+| `CALLTIME_TOPUP_10_PRICE_ID`           | Price ID for 10 minutes call time top-up.                                  |
+| `CALLTIME_TOPUP_30_PRICE_ID`           | Price ID for 30 minutes call time top-up.                                  |
+| `UNLIMITED_SUB_PRICE_ID`               | Price ID for unlimited subscription.                                       |
+| `PRO_SUB_PRICE_ID`                     | Price ID for pro subscription.                                             |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`    | Publishable key for Clerk authentication.                                  |
+| `CLERK_SECRET_KEY`                     | Secret key for Clerk authentication.                                       |
+| `DATABASE_URL`                         | Connection string for PostgreSQL database.                                 |
+| `NEXT_PUBLIC_APP_URL`                  | Base URL of the application.                                               |
+| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`    | Cloud name for Cloudinary image uploads.                                   |
+| `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` | Upload preset for Cloudinary.                                              |
+| `STRIPE_API_KEY`                       | API key for Stripe payment processing.                                     |
+| `STRIPE_WEBHOOK_SECRET`                | Webhook secret for Stripe.                                                 |
+| `NEXT_PUBLIC_OPENAI_API_KEY`           | API key for OpenAI integration.                                            |
+
+---
+
+## Available Commands
+
+Run these commands with `npm run [command]`:
+
+| Command  | Description                                |
+|----------|--------------------------------------------|
+| `dev`    | Starts a development instance of the app. |
+
+---
+
+## Contributing
+
+We welcome contributions! If you'd like to contribute, please:
+1. Fork this repository.
+2. Create a new branch with your feature or fix.
+3. Submit a pull request for review.
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
+
+## Contact
+
+For any questions or feedback, please contact **Rakesh Valasala**:
+- **Email**: [valasalarakesh1254@gmail.com](mailto:valasalarakesh1254@gmail.com)
+- **LinkedIn**: [linkedin.com/in/rakeshvalasala](https://www.linkedin.com/in/rakeshvalasala/) 
+
+---
