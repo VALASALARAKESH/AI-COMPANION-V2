@@ -10,9 +10,9 @@ This repository contains the source code for building a SaaS AI Platform using *
 - [Features](#features)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
+  - [Environment Variables](#environment-variables)
   - [Setup Prisma](#setup-prisma)
   - [Start the App](#start-the-app)
-- [Environment Variables](#environment-variables)
 - [Available Commands](#available-commands)
 - [Contributing](#contributing)
 - [License](#license)
@@ -94,6 +94,30 @@ npm install
 
 ---
 
+## Environment Variables
+
+Create a `.env` file in the root directory and add the following variables:
+
+| Variable Name                          | Description                                                                 |
+|----------------------------------------|-----------------------------------------------------------------------------|
+| `TOKENS_TOPUP_PRICE_ID`                | Price ID for tokens top-up.                                                |
+| `CALLTIME_TOPUP_5_PRICE_ID`            | Price ID for 5 minutes call time top-up.                                   |
+| `CALLTIME_TOPUP_10_PRICE_ID`           | Price ID for 10 minutes call time top-up.                                  |
+| `CALLTIME_TOPUP_30_PRICE_ID`           | Price ID for 30 minutes call time top-up.                                  |
+| `UNLIMITED_SUB_PRICE_ID`               | Price ID for unlimited subscription.                                       |
+| `PRO_SUB_PRICE_ID`                     | Price ID for pro subscription.                                             |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`    | Publishable key for Clerk authentication.                                  |
+| `CLERK_SECRET_KEY`                     | Secret key for Clerk authentication.                                       |
+| `DATABASE_URL`                         | Connection string for PostgreSQL database.                                 |
+| `NEXT_PUBLIC_APP_URL`                  | Base URL of the application.                                               |
+| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`    | Cloud name for Cloudinary image uploads.                                   |
+| `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` | Upload preset for Cloudinary.                                              |
+| `STRIPE_API_KEY`                       | API key for Stripe payment processing.                                     |
+| `STRIPE_WEBHOOK_SECRET`                | Webhook secret for Stripe.                                                 |
+| `NEXT_PUBLIC_OPENAI_API_KEY`           | API key for OpenAI integration.                                            |
+
+---
+
 ### **Setup Prisma**
 
 1. Generate Prisma Client:
@@ -121,30 +145,6 @@ npm run dev
 ```
 
 The application will be available at [http://localhost:3000](http://localhost:3000).
-
----
-
-## Environment Variables
-
-Create a `.env` file in the root directory and add the following variables:
-
-| Variable Name                          | Description                                                                 |
-|----------------------------------------|-----------------------------------------------------------------------------|
-| `TOKENS_TOPUP_PRICE_ID`                | Price ID for tokens top-up.                                                |
-| `CALLTIME_TOPUP_5_PRICE_ID`            | Price ID for 5 minutes call time top-up.                                   |
-| `CALLTIME_TOPUP_10_PRICE_ID`           | Price ID for 10 minutes call time top-up.                                  |
-| `CALLTIME_TOPUP_30_PRICE_ID`           | Price ID for 30 minutes call time top-up.                                  |
-| `UNLIMITED_SUB_PRICE_ID`               | Price ID for unlimited subscription.                                       |
-| `PRO_SUB_PRICE_ID`                     | Price ID for pro subscription.                                             |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`    | Publishable key for Clerk authentication.                                  |
-| `CLERK_SECRET_KEY`                     | Secret key for Clerk authentication.                                       |
-| `DATABASE_URL`                         | Connection string for PostgreSQL database.                                 |
-| `NEXT_PUBLIC_APP_URL`                  | Base URL of the application.                                               |
-| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`    | Cloud name for Cloudinary image uploads.                                   |
-| `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` | Upload preset for Cloudinary.                                              |
-| `STRIPE_API_KEY`                       | API key for Stripe payment processing.                                     |
-| `STRIPE_WEBHOOK_SECRET`                | Webhook secret for Stripe.                                                 |
-| `NEXT_PUBLIC_OPENAI_API_KEY`           | API key for OpenAI integration.                                            |
 
 ---
 
