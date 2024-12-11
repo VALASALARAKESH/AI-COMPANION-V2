@@ -82,8 +82,8 @@ This repository contains the source code for building a SaaS AI-COMPANION Platfo
 
 ### **1. Clone the Repository**
 ```bash
-git clone https://github.com/your-username/CUBOPS-AI-COMPANION.git
-cd CUBOPS-AI-COMPANION
+git clone https://github.com/VALASALARAKESH/AI-COMPANION-V2.git
+cd AI-COMPANION-V2
 ```
 
 ### **2. Install Packages**
