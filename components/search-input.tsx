@@ -17,8 +17,8 @@ interface SearchInputProps {
 export const SearchInput = ({ tags, selectedTags, nsfw: initialIsNSFW }: SearchInputProps) => {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const categoryId = searchParams.get("categoryId");
-    const name = searchParams.get("name");
+    const categoryId = searchParams ? searchParams.get("categoryId") : null;
+    const name = searchParams ? searchParams.get("name") : null;
 
     const [isNSFW, setIsNSFW] = useState(initialIsNSFW || "false");
 
