@@ -109,8 +109,10 @@ export const CompanionForm = ({
     //console.log(selectedTags)
     //const [newImageUrl, setNewImageUrl] = useState('');
     const preserveQueryParams = (path: string) => {
+        if (!searchParams) {
+            return path;
+        }
         const params = new URLSearchParams(searchParams.toString());
-        //console.log(params.toString());
         return `${path}${params.toString() ? `?${params.toString()}` : ''}`;
     };
     const onDelete = async (e: React.FormEvent) => {

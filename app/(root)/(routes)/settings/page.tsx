@@ -158,8 +158,8 @@ const SettingsPage = async () => {
                 Buy call time for companion:
             </div>
 
-            <CallTopUpButton amount={5} price="49.0 INR" isPro={isSubscribed} /><span className="mr-2"></span>
-            <CallTopUpButton amount={10} price="99.0 INR" isPro={isSubscribed} /><span className="mr-2"></span><CallTopUpButton amount={30} price="299.0 INR" isPro={isSubscribed} />
+            <CallTopUpButton amount={5} price="49 INR" isPro={isSubscribed} /><span className="mr-2"></span>
+            <CallTopUpButton amount={10} price="99 INR" isPro={isSubscribed} /><span className="mr-2"></span><CallTopUpButton amount={30} price="299 INR" isPro={isSubscribed} />
             <br />
             <br />
             <h3 className="text-lg font-medium">Usage</h3>

@@ -38,7 +38,7 @@ export const Navbar = ({ isPro, tier }: NavbarProps) => {
                 <MobileSidebar isPro={isPro} />
                 <Link href="/">
                     <div className="flex items-center">
-                        <Image src="/logo.png" alt="Logo" width={50} height={50} />
+                        <Image src="/logo.png" alt="Logo" width={40} height={40} />
                         <h1 className={cn("hidden md:block text-xl md:text-3xl font-bold text-primary ml-2", font.className)}>
                             CUBEOPS AI COMPANION <span className="text-muted-foreground text-sm"></span>
                         </h1>
