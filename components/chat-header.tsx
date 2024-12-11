@@ -75,8 +75,10 @@ export const ChatHeader = ({
     };
 
     const preserveQueryParams = (path: string) => {
+        if (!searchParams) {
+            return path;
+        }
         const params = new URLSearchParams(searchParams.toString());
-        //console.log(params.toString());
         return `${path}${params.toString() ? `?${params.toString()}` : ''}`;
     };
     
