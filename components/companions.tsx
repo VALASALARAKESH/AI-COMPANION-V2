@@ -177,12 +177,12 @@ export const Companions = ({ initialCompanions }: CompanionsProps) => {
                     height: '100%'
                   }} />
               </div>
-              <Link 
-                href={{
-                  pathname: `/chat/${item.id}`,
-                  query: searchParams.toString() ? Object.fromEntries(searchParams.entries()) : undefined,
-                }}              
-                className="flex flex-col h-full z-10 relative"
+              <Link
+                  href={{
+                    pathname: `/chat/${item.id}`,
+                    query: searchParams && searchParams.toString() ? Object.fromEntries(searchParams.entries()) : undefined,
+                  }}
+                  className="flex flex-col h-full z-10 relative"
               >
                 <CardHeader className="flex flex-col items-center justify-center text-center text-white">
                 </CardHeader>
