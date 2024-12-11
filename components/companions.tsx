@@ -36,11 +36,10 @@ export const Companions = ({ initialCompanions }: CompanionsProps) => {
     try {
       setIsLoading(true);
       setIsInitialState(false);
-      const categoryId = searchParams.get("categoryId");
-      const name = searchParams.get("name");
-      const nsfw = searchParams.get("nsfw");
-      const tags = searchParams.get("tag")?.split(',').filter(id => id !== '') || [];
-
+      const categoryId = searchParams ? searchParams.get("categoryId") : null;
+      const name = searchParams ? searchParams.get("name") : null;
+      const nsfw = searchParams ? searchParams.get("nsfw") : null;
+      const tags = searchParams ? searchParams.get("tag")?.split(',').filter(id => id !== '') || [] : [];
       let url = `/api/companions?page=${currentPage}&categoryId=${categoryId || ''}&name=${name || ''}&nsfw=${nsfw || ''}`;
 
       // Add tags to the URL
