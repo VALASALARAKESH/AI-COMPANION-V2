@@ -30,14 +30,15 @@ export const SearchInput = ({ tags, selectedTags, nsfw: initialIsNSFW }: SearchI
         const newState = isNSFW === "true" ? "false" : "true";
         setIsNSFW(newState);
         const newSearchParams = new URLSearchParams(window.location.search);
-        for (const param of Array.from(searchParams.keys())) {
-            newSearchParams.set(param, searchParams.get(param) || '');
+        if (searchParams) {
+            for (const param of Array.from(searchParams.keys())) {
+                newSearchParams.set(param, searchParams.get(param) || '');
+            }
         }
         newSearchParams.set('nsfw', newState);
 
         router.push(`${window.location.pathname}?${newSearchParams.toString()}`);
     };
-
     const [value, setValue] = useState(name || "");
     const debouncedValue = useDebounce<string>(value, 500);
 
