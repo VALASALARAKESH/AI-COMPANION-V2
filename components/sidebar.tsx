@@ -81,7 +81,7 @@ export const Sidebar = ({
                         >
                             <div className="flex flex-col gap-y-2 items-center flex-1" title={route.label}>
                                 {typeof route.icon === 'string' ? (
-                                    <Image src={`/${route.icon}`} className="h-5 w-5" alt={route.label} />
+                                    <Image src={`/${route.icon}`} className="h-5 w-5" height="5" width="5" alt={route.label} />
                                 ) : (
                                     <route.icon className="h-5 w-5" />
                                 )}

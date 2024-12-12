@@ -1,6 +1,7 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import prismadb from "@/lib/prismadb";
+import { call_modal_agent } from "@/lib/utils";
 import { checkSubscription } from "@/lib/subscription";
 import dotenv from "dotenv";
 import { create } from "domain";
@@ -46,6 +47,30 @@ export async function PATCH(
         if (!name || !src || !description || !personality || !seed) {
             return new NextResponse("Missing required fields", { status: 400 });
         };
+
+        const agentConfig = {
+            prompt: "Moderate character",
+            // Populate with necessary fields
+            context_id: "moderate",
+            agent_id: "moderate",
+            workspace_id: "moderate",
+            enable_image_generation: false,
+            character: {
+                name: name,
+                background: backstory,
+                appearance: selfiePre,
+                personality: personality,
+                description: description,
+                seed_message: seed,
+                tags: tags.join(", ")
+            }
+        };
+        const moderation = await call_modal_agent("moderate_character",agentConfig);
+        const moderation_result = await moderation.json()
+        if (moderation_result === true) {
+            console.log("Moderation failed");
+            return new NextResponse("Moderation failed", { status: 406});
+        }
 
         //find companion from db
         const companion = await prismadb.companion.findUnique({

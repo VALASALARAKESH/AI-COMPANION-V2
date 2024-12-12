@@ -144,7 +144,7 @@
               
         const lastUserMessage = messagesRef.current[messagesRef.current.length - 2];
         const lastAssistantMessage = messagesRef.current[messagesRef.current.length - 1];
-        console.log("last user message",lastUserMessage)
+        //console.log("last user message",lastUserMessage)
         //console.log("last assistant message",lastAssistantMessage)
         setInput("");
         
@@ -213,10 +213,18 @@
       const autoSubmit = async () => {
         try {
           initializingRef.current = true;
+          //let introMessage = `Let's start the interaction. Embody character and speak naturally, expressing through dialogue only and conveying emotions and actions through natural words.`;
+
+          let introMessage = `Now begin role-play with me.`;
+          // Check if seed phrase contains narration marks: *text*. "text", (text) <text>
+          const checkNarrativeMarks = (text: string): boolean => {
+            const narrativeMarksPattern = /["*<\(\[].*?[">\)\]*]/;
+            return narrativeMarksPattern.test(text);
+          };
 
           if (messages.length <= 1) {
             await append({
-              content: `Narrate a brief introduction scene with me,showing the character's personality. Keep it concise but engaging. Stay in character. Start with dialogue or actions directly. Progress at slow pace.`,
+              content: introMessage,
               role: "user",
             }, {
               options: {

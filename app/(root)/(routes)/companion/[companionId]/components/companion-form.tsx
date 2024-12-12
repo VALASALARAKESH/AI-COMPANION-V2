@@ -25,10 +25,10 @@ import { useSearchParams } from 'next/navigation';
 
 const PREAMBLE = `Your personality can be described as ...`;
 const PREAMBLE_BEHAVIOUR = `You behave like ...`;
-const PREAMBLE_BACKSTORY = `relevant details and facts about the character ...`;
+const PREAMBLE_BACKSTORY = `Story info, events, relevant details and facts about the character ...`;
 const PREAMBLE_SELFIE_PRE = `Keywords to describe your character appearance in detail: keyword, keyword...`;
 const PREAMBLE_SELFIE_POST = `describe image details and effects ...`;
-const SEED_CHAT = `Introduction message for the character ...`;
+const SEED_CHAT = `Dialogue example for the character ...`;
 
 const formSchema = z.object({
     name: z.string().min(1, {
@@ -38,7 +38,7 @@ const formSchema = z.object({
         .min(1, {
             message: "Description is required.",
         })
-        .max(50, { message: "Description is too long" }),
+        .max(200, { message: "Description is too long" }),
     personality: z.string().min(1, {
         message: "Personality require at least 200 characters."
     }),
@@ -280,12 +280,21 @@ export const CompanionForm = ({
                 router.push(preserveQueryParams("/"))
             }
         } catch (error) {
-            //console.log(error);
-            toast({
-                variant: "destructive",
-                description: "Something went wrong.",
-                duration: 3000,
-            });
+            console.log(error);
+            if ((error as any).response.status === 406) {
+                toast({
+                    variant: "destructive",
+                    description: "Illegal content detected in character",
+                    duration: 3000,
+                });
+            }
+            else {
+                toast({
+                    variant: "destructive",
+                    description: "Something went wrong.",
+                    duration: 3000,
+                });
+            }
         }
     };
     // Define CSS styles for the button
@@ -629,7 +638,7 @@ export const CompanionForm = ({
                             <FormItem>
                                 <FormLabel>Companion backstory</FormLabel>
                                 <FormControl>
-                                    <Textarea disabled={isLoading} rows={6} className="bg-background resize-none" placeholder={PREAMBLE_BACKSTORY} {...field} />
+                                    <Textarea disabled={isLoading} rows={20} className="bg-background resize-none" placeholder={PREAMBLE_BACKSTORY} {...field} />
                                 </FormControl>
                                 <FormDescription>
                                     Describe all relevant facts and details about companion.
@@ -761,12 +770,21 @@ export const CompanionForm = ({
                                                     type="checkbox"
                                                     {...rest} // Spread the rest of the field object into the input element's props
                                                     checked={value} // Use the value property to set the checked property
-                                                    style={{ width: '14px', height: '14px' }}
+                                                    style={{
+                                                        width: '14px',
+                                                        height: '14px',
+                                                        backgroundColor: '#2d2d2d',
+                                                        border: '2px solid #666',
+                                                        borderRadius: '3px',
+                                                        opacity: '0.8',
+                                                        cursor: 'not-allowed'
+                                                    }}
+                                                    disabled
                                                 />
                                             </label>
                                         </FormControl>
                                         <FormDescription>
-                                            (Other users can talk to the character)
+                                            (New companions are public, other users can also talk to the character))
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>
