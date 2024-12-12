@@ -8,7 +8,7 @@ ENV NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 ENV NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 ENV NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
 ENV NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
-ENV NEXT_PUBLIC_APP_URL=https://
+ENV NEXT_PUBLIC_APP_URL=https://cubeops.in
 
 LABEL fly_launch_runtime="Next.js/Prisma"
 RUN apt-get update && apt-get install -y ca-certificates
