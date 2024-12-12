@@ -13,6 +13,7 @@ This repository contains the source code for building a SaaS AI-COMPANION Platfo
   - [Environment Variables](#environment-variables)
   - [Setup Prisma](#setup-prisma)
   - [Start the App](#start-the-app)
+- [Backend](#backend)
 - [Available Commands](#available-commands)
 - [Contributing](#contributing)
 - [License](#license)
@@ -148,6 +149,85 @@ The application will be available at [http://localhost:3000](http://localhost:30
 
 ---
 
+## Backend
+
+### **Repository**
+The backend for this project can be found at: [modal-ai-companion](https://github.com/VALASALARAKESH/modal-ai-companion.git)
+
+### **Backend Features**
+
+- Character-based AI interactions with configurable personalities
+- YAML-based character configuration
+- Image generation support for character avatars
+- Streaming responses
+- Modal-based deployment architecture
+- FastAPI backend integration
+
+### **Prerequisites**
+- Python 3.10 or higher
+- Poetry for dependency management
+- Modal.com account
+- Required API keys:
+  - DeepInfra API key
+  - FAL.ai API key
+  - OpenAI API key (optional)
+  - Google Cloud Storage credentials
+
+### **Installation**
+
+1. Clone the backend repository:
+```bash
+git clone https://github.com/VALASALARAKESH/modal-ai-companion.git
+cd modal-ai-companion
+```
+
+2. Install dependencies using Poetry:
+```bash
+poetry install
+```
+
+### **Configuration**
+
+Required environment variables:
+
+- `API_KEY`: Authentication token (used to authenticate with app endpoint)
+- `MODAL_TOKEN_ID`: Modal authentication token ID
+- `MODAL_TOKEN_SECRET`: Modal authentication secret
+- `Deep Infra API key`: Added to Modal secrets
+- `FAL.ai API key`: Added to Modal secrets
+- `GCP credentials`: Added to Modal secrets for image storage
+
+### **Usage**
+
+Start the server:
+```bash
+modal serve src.app
+```
+
+To deploy:
+```bash
+modal deploy src.app
+```
+
+### **Backend Project Structure**
+
+- **src/**
+  - `app.py`: Main FastAPI application
+  - **agent/**: Modal agent implementation
+  - **handlers/**: Image and LLM handling logic
+  - **models/**: Data models and schemas
+- **test/**
+  - **characters/**: Character YAML files
+  - `client.py`: Test client implementation
+  - `character_loader.py`: YAML character loading utilities
+
+### **Backend API Endpoints**
+- `/init_agent`: Initialize or update an agent
+- `/prompt`: Send prompts to the agent
+- `/generate_avatar`: Generate character avatars
+
+---
+
 ## Available Commands
 
 Run these commands with `npm run [command]`:
@@ -172,6 +252,8 @@ We welcome contributions! If you'd like to contribute, please:
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
+
+
 
 ## Contact
 
