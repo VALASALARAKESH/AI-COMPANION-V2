@@ -1,18 +1,23 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-// This example protects all routes including api/trpc routes
-// Please edit this to allow other routes to be public as needed.
-// See https://clerk.com/docs/nextjs/middleware for more information about configuring your middleware
-//publicRoutes: ["/api/webhook","/","/api/callhook"],//
+// Define the protected routes
+const isProtectedRoute = createRouteMatcher(['/settings(.*)', '/chat(.*)']);
 
-const isProtectedRoute = createRouteMatcher(['/settings(.*)', '/chat(.*)'])
-
-export default clerkMiddleware(async (auth, req) => {
-    if (isProtectedRoute(req)) await auth.protect()
-})
-
+export default clerkMiddleware(async (auth, req: NextRequest) => {
+    if (isProtectedRoute(req)) {
+        // Protect the route
+        await auth.protect();
+    }
+    // Allow public access to other routes
+    return NextResponse.next();
+});
 
 export const config = {
-    matcher: ['/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-        "/", "/(api|trpc)(.*)"],
+    matcher: [
+        '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+        "/",
+        "/(api|trpc)(.*)"
+    ],
 };
