@@ -4,9 +4,6 @@ import prismadb from "@/lib/prismadb";
 import { checkSubscription } from "@/lib/subscription";
 import { call_modal_agent } from "@/lib/utils";
 
-
-
-
 import {getBolnaAgentJson} from "@/lib/bolna";
 
 export const maxDuration = 60; //2 minute timeout
@@ -134,7 +131,7 @@ export async function POST(req: Request) {
         const result = await response.json();
         const voice_agent_id = result.agent_id;
         const status = result.status;
-        
+
         //update database
         const companion = await prismadb.companion.create({
             data: {
@@ -169,10 +166,10 @@ export async function POST(req: Request) {
                 voiceAgentId: voice_agent_id,
             }
         });
-        
 
 
-        
+
+
         return NextResponse.json(companion);
     } catch (error) {
         console.log("[COMPANION_POST] ERROR",error);

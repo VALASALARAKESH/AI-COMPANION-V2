@@ -73,6 +73,7 @@ model Companion {
   bot            Bot[]
   messages       Message[]
   featured       Boolean    @default(false)
+  cot_prompt     Boolean    @default(false)
 
   tags           Tag[]            @relation("CompanionsTags")
   nsfw           Boolean          @default(false)

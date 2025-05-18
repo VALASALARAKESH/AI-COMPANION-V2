@@ -1,4 +1,3 @@
-"use client"
 import { useState, useEffect, useRef } from "react";
 import React from "react";
 import { BeatLoader } from "react-spinners";
@@ -13,10 +12,8 @@ import { chatMessagesJsonlToBlocks } from "@/components/parse-blocks-from-messag
 import { MessageTypes, validTypes } from "@/components/block-chat-types";
 import { StreamContent } from "@/components/stream-content";
 import Image from "next/image";
-import { Companion } from "@prisma/client";
-import useStreamStore from "@/lib/use-stream-store";
-import { useUser } from '@clerk/clerk-react';
 
+import useStreamStore from "@/lib/use-stream-store";
 const { v4: uuidv4 } = require('uuid');
 
 export interface ChatMessageProps {
@@ -24,13 +21,11 @@ export interface ChatMessageProps {
     role: "system" | "user" | "function" | "assistant" | "data" | "tool";
     content?: React.ReactNode | string | any[];
     isLoading?: boolean;
-    companion?: Companion;
     src?: string;
     blockId?: string;
     streamState?: string;
     companionName?: string;
     accumulatedContentRef?: React.MutableRefObject<string>;
-    userName?: string;
 }
 
 const imageStyles = {
@@ -44,7 +39,7 @@ const imageStyles = {
         WebkitFontSmoothing: "antialiased",
         overflow: "hidden",
     },
-    loadedWrapper: {
+    loadedWrapper: {  // Add this missing style
         backgroundColor: "transparent",
         transition: "background-color 0.3s ease",
     },
@@ -57,7 +52,6 @@ const imageStyles = {
         WebkitImageRendering: "crisp-edges", // Webkit
     }
 };
-
 function applyLoadedStyles(wrapperElement: HTMLDivElement, imgElement: HTMLImageElement) {
     Object.assign(wrapperElement.style, imageStyles.loadedWrapper);
     Object.assign(imgElement.style, imageStyles.loadedImg);
@@ -71,18 +65,18 @@ export const messageStyles = {
     speech: "text-white-200 dark:text-white-200", // for other text
 };
 
+
+
 export const ChatMessage = ({
                                 id,
                                 role,
                                 content,
                                 isLoading,
-                                companion,
                                 src,
                                 blockId,
                                 streamState,
                                 companionName,
                                 accumulatedContentRef,
-                                userName
                             }: ChatMessageProps) => {
     const { toast } = useToast();
     const { theme } = useTheme();
@@ -96,13 +90,16 @@ export const ChatMessage = ({
     }, [streamedContent]);
 
     const handleImageLoad = (wrapperElement: HTMLDivElement, imgElement: HTMLImageElement) => {
+
         setImageLoaded(true);
         applyLoadedStyles(wrapperElement, imgElement);
+
     };
 
     if (isLoading || (streamState === 'started' && !streamedContent)) {
         return <BeatLoader color={theme === "light" ? "black" : "white"} size={5} />;
     }
+
     const formatText = (text: string) => {
         let formatted = text;
         let elements: JSX.Element[] = [];
@@ -144,9 +141,11 @@ export const ChatMessage = ({
             </span>
                     );
                 }
+
                 lastIndex = match.index + content.length;
             }
         });
+
         // Add any remaining text after the last match
         if (lastIndex < text.length) {
             elements.push(
@@ -155,6 +154,7 @@ export const ChatMessage = ({
         </span>
             );
         }
+
         return elements;
     };
 
@@ -173,39 +173,95 @@ export const ChatMessage = ({
             return <div>{streamedContent}</div>;
         }
         if (Array.isArray(content)) {
+            // Split blocks into separate messages
             return content.map((block, index) => {
                 if (!block.id) {
                     block.id = uuidv4();
                 }
+
+                // Create a wrapper for each message type
+                const messageWrapper = (messageContent: JSX.Element) => (
+                    <div key={block.id} className="flex flex-col gap-2">
+            <span className="text-sm text-gray-500">
+              {role === "user" ? "You" : companionName}:
+            </span>
+                        {messageContent}
+                    </div>
+                );
                 if ('text' in block && typeof block.text === 'string' && validTypes.includes(block.messageType!) && block.messageType === MessageTypes.TEXT && (block.role === 'user' || block.role === 'assistant' || block.role === 'system') && !/!\[.*?\]\(.*?\)/.test(block.text)) {
-                    return <p key={block.id}>{formatText(block.text)}</p>;
+
+                    return messageWrapper(
+                        <div className="leading-6 text-sm">
+                            {formatText(block.text)}
+                        </div>
+                    );
                 }
-                if (block.streamState === 'started' && block.messageType !== MessageTypes.IMAGE && block.mimeType != "image/png") {
-                    return <StreamContent blockId={block.id}
-                                          onContentUpdate={accumulatedContentRef?.current ? (newContent: string) => accumulatedContentRef.current = newContent : undefined}
-                                          key={block.id} />;
+                if (block.streamState === 'started' && block.messageType !== MessageTypes.IMAGE && block.messageType !== MessageTypes.VOICE && block.mimeType != "image/png") {
+                    //console.log("Stream block detected:", block)
+                    return <StreamContent blockId={block.id} onContentUpdate={accumulatedContentRef?.current ? (newContent: string) => accumulatedContentRef.current = newContent : undefined} key={block.id} />;
                 }
-                if (block.messageType === MessageTypes.IMAGE) {
-                    const parseImageUrlFromMarkdown = (text: string) => {
-                        const regex = /\!\[.*?\]\((.*?)\)/;
+                if (block.messageType === MessageTypes.VOICE) {
+
+                    const parseVoiceUrlFromMarkdown = (text: string) => {
+                        const regex = /\!\[voice]\((.*?)\)/;
                         const matches = text.match(regex);
                         const strippedText = text.replace(/\!\[.*?\]\(.*?\)/g, '').trim();
+
+                        return {
+                            audioUrl: matches ? matches[1] : null,
+                            cleanText: strippedText
+                        };
+                    };
+
+                    const { audioUrl, cleanText } = parseVoiceUrlFromMarkdown(block.text);
+
+                    return messageWrapper(
+                        <div className="leading-6 text-sm">
+                            {cleanText && cleanText !== "" && (
+                                <p className="mb-2">{formatText(cleanText)}</p>
+                            )}
+                            <div className="audio-player-wrapper">
+                                <audio controls className="w-full max-w-md">
+                                    <source src={audioUrl || undefined} type="audio/mpeg" />
+                                    Your browser does not support the audio element.
+                                </audio>
+                            </div>
+                        </div>
+                    );
+                }
+
+                if (block.messageType === MessageTypes.IMAGE) {
+                    //console.log("Image block detected:", block.text)
+                    const parseImageUrlFromMarkdown = (text: string) => {
+                        // Extract URL
+                        const regex = /\!\[(?!voice).*?\]\((.*?)\)/;
+                        const matches = text.match(regex);
+
+                        // Strip markdown image syntax from text
+                        const strippedText = text.replace(/\!\[.*?\]\(.*?\)/g, '').trim();
+
+
+                        // Return both URL and cleaned text
                         return {
                             imageUrl: matches ? matches[1] : null,
                             cleanText: strippedText
                         };
                     };
+
                     const { imageUrl, cleanText } = parseImageUrlFromMarkdown(block.text);
-                    return (
-                        <div key={block.id}>
+
+                    //console.log("Parsed image url: ", imageUrl)
+                    return messageWrapper(
+                        <div className="leading-6 text-sm">
                             {cleanText && cleanText !== "" && (
                                 <p className="mb-2">{formatText(cleanText)}</p>
                             )}
                             <div
+                                ref={wrapperRef}
                                 className={`image-placeholder-wrapper ${imageLoaded ? 'loaded' : ''}`}
                                 style={imageStyles.wrapper}
                             >
-                                {imageUrl && (<div ref={wrapperRef} style={imageStyles.wrapper}>
+                                {imageUrl && (
                                     <Image
                                         src={imageUrl}
                                         alt="Generated Image"
@@ -221,25 +277,16 @@ export const ChatMessage = ({
                                             }
                                         }}
                                         onError={(event) => {
-                                            const imgElement = event.target as HTMLImageElement;
-                                            const retryCount = parseInt(imgElement.dataset.retryCount || '0');
-                                            if (retryCount < maxRetries) {
-                                                imgElement.dataset.retryCount = (retryCount + 1).toString();
-                                                setTimeout(() => {
-                                                    imgElement.src = imageUrl;
-                                                }, 2000);
-                                            } else {
-                                                console.error(`Failed to load image after ${maxRetries} attempts`);
-                                                imgElement.style.display = 'none';
-                                            }
+                                            /* Error handling commented out */
                                         }}
                                     />
-                                </div>)}
+                                )}
                             </div>
                         </div>
                     );
                 }
-                return null;
+
+
             }).filter(Boolean);
         } else if (typeof content === 'string') {
             console.log("string content")
@@ -251,53 +298,35 @@ export const ChatMessage = ({
     return (
         <>
             <style jsx global>{`
-                @keyframes fadeInOut {
-                    0%, 100% {
-                        opacity: 0.8;
-                    }
-                    50% {
-                        opacity: 0.6;
-                    }
-                }
-
-                .image-placeholder-wrapper {
-                    position: relative;
-                    background-color: rgb(50, 50, 50);
-                    max-width: 768px;
-                    aspect-ratio: 3/4;
-                    transition: background-color 0.5s ease-in-out;
-                    overflow: hidden;
-                }
-
-                .image-placeholder-wrapper:not(.loaded) {
-                    animation: fadeInOut 2s infinite;
-                }
-
-                .image-placeholder-wrapper img {
-                    opacity: 0;
-                    transition: opacity 0.3s ease-in-out;
-                }
-
-                .image-placeholder-wrapper.loaded img {
-                    opacity: 1;
-                }
-            `}</style>
-            <div className={cn("group flex items-start gap-x-5 py-3 w-full text-left justify-start")}>
-                <div className="flex-1 mr-4 space-y-2">
-                    <div className="flex items-center gap-x-2">
-                        {role !== "user" && companion?.src && <BotAvatar src={companion.src} height="h-5" width="w-5" />}
-                        {role === "user" && <UserAvatar />}
-                        <span className="text-sm text-gray-500">
-                            {role === "user" && companion ? companion.userName : companionName}:
-                        </span>
-                    </div>
-                    <div className="leading-6 text-sm">
-                        {renderContent()}
-                    </div>
-                </div>
+        @keyframes fadeInOut {
+          0%, 100% { opacity: 0.8; }
+          50% { opacity: 0.6; }
+        }
+        .image-placeholder-wrapper {
+          position: relative;
+          background-color: rgb(50, 50, 50);
+          max-width: 768px;
+          aspect-ratio: 3/4;
+          transition: background-color 0.5s ease-in-out;
+          overflow: hidden;
+        }
+        .image-placeholder-wrapper:not(.loaded) {
+          animation: fadeInOut 2s infinite;
+        }
+        .image-placeholder-wrapper img {
+          opacity: 0;
+          transition: opacity 0.3s ease-in-out;
+        }
+        .image-placeholder-wrapper.loaded img {
+          opacity: 1;
+        }
+      `}</style>
+            <div className={cn(
+                "group flex flex-col gap-4 py-2 w-full",
+                role === "user" && "justify-end"
+            )}>
+                {renderContent()}
             </div>
         </>
     );
 }
-
-export default ChatMessage;

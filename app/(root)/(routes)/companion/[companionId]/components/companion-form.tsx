@@ -5,7 +5,7 @@ import axios, { AxiosResponse } from "axios";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { Wand2, Trash2 } from "lucide-react";
+import { Wand2, Trash2, Group } from "lucide-react";
 import { Category, Companion, Voice, PhoneVoice,Tag } from "@prisma/client";
 //import { BotAvatarForm } from "@/components/bot-avatar-form";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -15,20 +15,20 @@ import { Button } from "@/components/ui/button";
 import { ImageUpload } from "@/components/image-upload";
 import { useToast } from "@/components/ui/use-toast";
 import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger,SelectGroup,SelectSeparator,SelectLabel } from "@/components/ui/select";
 import dotenv from "dotenv";
 dotenv.config({ path: `.env` });
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation';
-
-
+//Steamship bot handle for generating avatars
+const STEAMSHIP_IMG_BOT_URL = "https://mpoikkilehto.steamship.run/avatar-gen-dev/backend-test-bot-ad1e44c62e699fda311a8365b6193913/generate_avatar";
 
 const PREAMBLE = `Your personality can be described as ...`;
 const PREAMBLE_BEHAVIOUR = `You behave like ...`;
-const PREAMBLE_BACKSTORY = `Story info, events, relevant details and facts about the character ...`;
-const PREAMBLE_SELFIE_PRE = `Keywords to describe your character appearance in detail: keyword, keyword...`;
+const PREAMBLE_BACKSTORY = `Story info, events, relevant details and facts about the character ... Location, all other info`;
+const PREAMBLE_SELFIE_PRE = `Keywords to describe your character appearance in detail, subject, clothes, body description, style, ... `;
 const PREAMBLE_SELFIE_POST = `describe image details and effects ...`;
-const SEED_CHAT = `Dialogue example for the character ...`;
+const SEED_CHAT = `First message for the character ...`;
 
 const formSchema = z.object({
     name: z.string().min(1, {
@@ -63,7 +63,8 @@ const formSchema = z.object({
     regenerateImage: z.boolean().optional(),
     phoneVoiceId: z.string().optional(),
     tags: z.array(z.string()).min(1,{ message: "tags are required" }),
-    nsfw: z.boolean().optional()
+    nsfw: z.boolean().optional(),
+    cot_prompt: z.boolean().optional()
 });
 
 
@@ -80,12 +81,12 @@ interface CompanionFormProps {
 };
 
 export const CompanionForm = ({
-    categories,
-    voices,
-    phoneVoices,
-    initialData,
-    tags
-}: CompanionFormProps) => {
+                                  categories,
+                                  voices,
+                                  phoneVoices,
+                                  initialData,
+                                  tags
+                              }: CompanionFormProps) => {
     const { toast } = useToast();
     const router = useRouter();
     const [isImgLoading, setIsImgLoading] = useState(false);
@@ -113,6 +114,7 @@ export const CompanionForm = ({
             return path;
         }
         const params = new URLSearchParams(searchParams.toString());
+        //console.log(params.toString());
         return `${path}${params.toString() ? `?${params.toString()}` : ''}`;
     };
     const onDelete = async (e: React.FormEvent) => {
@@ -121,7 +123,7 @@ export const CompanionForm = ({
         try {
             await axios.delete(`/api/companion/${initialData?.id}`);
             toast({
-               description: "Success."
+                description: "Success."
             });
             router.refresh();
             router.push(preserveQueryParams("/"));
@@ -141,33 +143,38 @@ export const CompanionForm = ({
         const imageModel = value || imageModelWatch || imageModelGetValues;
 
 
-        const data = { // Preparing data to be sent with POST request 
+        const data = { // Preparing data to be sent with POST request
             prompt: characterAppearance,
             agent_id : "avatar-gen",
             context_id : "avatar-gen",
             workspace_id: "avatars",
-            image_config: { 
+            image_config: {
                 image_model: imageModel,
                 image_size: '{ "width":512,"height":768}',
                 image_width: "512",
                 image_height: "768",
                 image_api_path: imageModel.includes("flux") ? "fal-ai/flux/dev" : "fal-ai/lora"
             }
-            
+
         };
 
-        // Sending POST request 
+        // Sending POST request
         //console.log("image submit details", data)
-        axios.post("/api/generate-avatar", data)            
-        .then((response: AxiosResponse) => {
-            //console.log('Response:', response);
-            const imgSrc = response.data;
-            //console.log(imgSrc);
+        axios.post("/api/generate-avatar", data)
+            .then((response: AxiosResponse) => {
+                //console.log('Response:', response);
+                const imgSrc = response.data;
+                //console.log(imgSrc);
 
-            setImageUrl(imgSrc);
-            setIsImgLoading(false);
-        }).catch((error) => {
-            console.log('Error', error);
+                setImageUrl(imgSrc);
+                setIsImgLoading(false);
+            }).catch((error) => {
+            toast({
+                variant: "destructive",
+                description: (error as any).response.data.message,
+                duration: 3000,
+            });
+            //console.log('Error', error);
             setIsImgLoading(false);
             // handle error
         });
@@ -207,20 +214,21 @@ export const CompanionForm = ({
             selfiePost: "",
             model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
             createImages: false,
-            imageModel: "fal-ai/flux/dev",
+            imageModel: "flux-schnell",
             voiceId: 'none',
             backstory: "",
             regenerateImage: false,
             phoneVoiceId: '101',
             tags: [],
-            nsfw: false
+            nsfw: false,
+            cot_prompt:false
 
 
 
         },
     });
     const { watch, handleSubmit, register, formState: { errors }, setValue, getValues } = form;
-    
+
     const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setTagInput(e.target.value);
     };
@@ -256,9 +264,9 @@ export const CompanionForm = ({
     const isLoading = form.formState.isSubmitting;
 
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
-        try {           
+        try {
             const submissionData = {
-              ...values,
+                ...values,
                 tags: selectedTags,
             };
             if (initialData) {
@@ -282,9 +290,10 @@ export const CompanionForm = ({
         } catch (error) {
             console.log(error);
             if ((error as any).response.status === 406) {
+                let error_msg = (error as any).response.data;
                 toast({
                     variant: "destructive",
-                    description: "Illegal content detected in character",
+                    description: (error as any).response.data.message,
                     duration: 3000,
                 });
             }
@@ -381,7 +390,7 @@ export const CompanionForm = ({
                             <FormItem>
                                 <FormLabel>Character appearance</FormLabel>
                                 <FormControl>
-                                    <Input disabled={isLoading} className="bg-background resize-none" placeholder={PREAMBLE_SELFIE_PRE} {...field} />
+                                    <Textarea disabled={isLoading} rows={4} className="bg-background resize-none" placeholder={PREAMBLE_SELFIE_PRE} {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -403,18 +412,78 @@ export const CompanionForm = ({
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent style={dropdownStyle}>
-                                                <SelectItem key="fal-ai/flux/dev" value="fal-ai/flux/dev">FLUX.1 (SFW)</SelectItem>
+                                                <SelectGroup>
+                                                    <SelectLabel>--- Recommended Essential Models ---</SelectLabel>
+                                                    <SelectItem value="essential/photorealism">Essential Photorealism</SelectItem>
+                                                    <SelectItem value="essential/anime">Essential Anime</SelectItem>
+                                                    <SelectItem value="essential/art">Essential Art</SelectItem>
+                                                </SelectGroup>
+                                                <SelectSeparator />
+                                                <SelectGroup>
+                                                    <SelectLabel>--- Flux Lora Models ---</SelectLabel>
+                                                    <SelectItem key="https://civitai.com/api/download/models/1272367?type=Model&format=SafeTensor" value="https://civitai.com/api/download/models/1272367?type=Model&format=SafeTensor">Flux Realistic Anime</SelectItem>
+
+                                                    <SelectItem key="https://civitai.com/api/download/models/729537?type=Model&format=SafeTensor" value="https://civitai.com/api/download/models/729537?type=Model&format=SafeTensor">Flux Anime</SelectItem>
+                                                    <SelectItem key="https://civitai.com/api/download/models/1061126?type=Model&format=SafeTensor" value="https://civitai.com/api/download/models/1061126?type=Model&format=SafeTensor">Flux Hentai</SelectItem>
+                                                    <SelectItem key="https://civitai.com/api/download/models/904370?type=Model&format=SafeTensor" value="https://civitai.com/api/download/models/904370?type=Model&format=SafeTensor">Flux Explicit</SelectItem>
+                                                    <SelectItem key="https://civitai.com/api/download/models/753053?type=Model&format=SafeTensor" value="https://civitai.com/api/download/models/753053?type=Model&format=SafeTensor">Flux Pony Fantasy</SelectItem>
+                                                    <SelectItem key="https://civitai.com/api/download/models/728041?type=Model&format=SafeTensor" value="https://civitai.com/api/download/models/728041?type=Model&format=SafeTensor">Flux Midjorney</SelectItem>
+                                                </SelectGroup>
+                                                <SelectSeparator />
+                                                <SelectGroup>
+                                                    <SelectLabel>--- Stable diffusion 1.5 Models ---</SelectLabel>
+                                                    <SelectItem key="realistic-vision-v3" value="realistic-vision-v3">Realistic Vision v3</SelectItem>
+                                                    <SelectItem key="dark-sushi-mix-v2-25" value="dark-sushi-mix-v2-25">Dark Sushi mix v2.25</SelectItem>
+                                                    <SelectItem key="absolute-reality-v1-8-1" value="absolute-reality-v1-8-1">Absolute Reality v1.8.1</SelectItem>
+                                                    <SelectItem key="dream-shaper-v8" value="dream-shaper-v8">Dream Shaper v8</SelectItem>
+                                                    <SelectSeparator />
+                                                </SelectGroup>
+
+                                                <SelectGroup>
+                                                    <SelectLabel>--- Stable diffusion XL Models ---</SelectLabel>
+                                                    <SelectItem key="juggernaut-xl-v10" value="juggernaut-xl-v10">Juggernaut XL (SDXL)</SelectItem>
+                                                    <SelectItem key="realvis-xl-v4" value="realvis-xl-v4">Realistic Vision v4 (SDXL)</SelectItem>
+                                                    <SelectItem key="reproduction-v3-31" value="reproduction-v3-31">Reproduction v3 (SDXL) Anime</SelectItem>
+                                                    <SelectItem key="real-cartoon-xl-v6" value="real-cartoon-xl-v6">Realcartoon v6 (SDXL)</SelectItem>
+                                                    <SelectItem key="counterfeit-xl-v2-5" value="counterfeit-xl-v2-5">Counterfeit (SDXL) Anime</SelectItem>
+                                                    <SelectItem key="animagine-xl-v-3-1" value="animagine-xl-v-3-1">Animagine XL (SDXL) Anime</SelectItem>
+                                                    <SelectSeparator />
+                                                </SelectGroup>
+                                                {/*
+                                                <SelectItem key="https://civitai.com/api/download/models/926965?type=Model&format=SafeTensor&size=pruned&fp=fp16" value="https://civitai.com/api/download/models/926965?type=Model&format=SafeTensor&size=pruned&fp=fp16">Lustify (SDXL) Realistic</SelectItem>
+                                                <SelectItem key="https://civitai.com/api/download/models/233092?type=Model&format=SafeTensor&size=full&fp=fp16" value="https://civitai.com/api/download/models/233092?type=Model&format=SafeTensor&size=full&fp=fp16">Better Than Words (SDXL) Realistic</SelectItem>
+                                                <SelectItem key="https://civitai.com/api/download/models/981979?type=Model&format=SafeTensor&size=pruned&fp=fp16" value="https://civitai.com/api/download/models/981979?type=Model&format=SafeTensor&size=pruned&fp=fp16">Suzannes Mix (SDXL) Realistic</SelectItem>
+                                                <SelectItem key="https://civitai.com/api/download/models/608842?type=Model&format=SafeTensor&size=full&fp=fp16" value="https://civitai.com/api/download/models/608842?type=Model&format=SafeTensor&size=full&fp=fp16">iNiverseMix (SDXL) Realistic</SelectItem>
+                                                <SelectItem key="https://civitai.com/api/download/models/228559?type=Model&format=SafeTensor&size=pruned&fp=fp16" value="https://civitai.com/api/download/models/228559?type=Model&format=SafeTensor&size=pruned&fp=fp16">Omnigen XL (SDXL) Realistic/Anime</SelectItem>
+                                                <SelectItem key="https://civitai.com/api/download/models/892880?type=Model&format=SafeTensor&size=pruned&fp=fp16" value="https://civitai.com/api/download/models/892880?type=Model&format=SafeTensor&size=pruned&fp=fp16">Albedo (SDXL) Realistic</SelectItem>
+                                                <SelectItem key="https://civitai.com/api/download/models/384264?type=Model&format=SafeTensor&size=full&fp=fp16" value="https://civitai.com/api/download/models/384264?type=Model&format=SafeTensor&size=full&fp=fp16">AnythingXL (SDXL) Realistic/Anime</SelectItem>
+                                                <SelectItem key="https://civitai.com/api/download/models/156375" value="https://civitai.com/api/download/models/156375">Clearhung Anime (SDXL)</SelectItem>
+                                                <SelectItem key="https://civitai.com/api/download/models/303526?type=Model&format=SafeTensor&size=full&fp=fp16" value="https://civitai.com/api/download/models/303526?type=Model&format=SafeTensor&size=full&fp=fp16">Animemix (SDXL)</SelectItem>
+                                                <SelectItem key="https://civitai.com/api/download/models/286821" value="https://civitai.com/api/download/models/286821">Deephentai (SDXL)</SelectItem>
+                                                */}
+
+                                                <SelectGroup>
+                                                    <SelectLabel>--- Safe for work models ---</SelectLabel>
+                                                    <SelectItem key="flux-schnell" value="flux-schnell">FLUX Schnell (SFW)</SelectItem>
+                                                    <SelectItem key="fal-ai/stable-diffusion-v35-medium" value="fal-ai/stable-diffusion-v35-medium">StableDiffusion v3.5 (SFW)</SelectItem>
+                                                </SelectGroup>
+
+
+
+
+
+
                                             </SelectContent>
                                         </Select>
                                         &nbsp;&nbsp;<button // Use a plain HTML button with type="button"
-                                            type="button"
-                                            className="btn-sm" // Add the appropriate button class
-                                            style={isImgLoading ? avatarButtonStyleDimmed : avatarButtonStyle}
-                                            onClick={() => handleImageUpdate("")} // Call playAudio directly without arguments // Call playAudio directly
-                                            disabled={isImgLoading}
-                                        >
-                                            Generate avatar
-                                        </button>
+                                        type="button"
+                                        className="btn-sm" // Add the appropriate button class
+                                        style={isImgLoading ? avatarButtonStyleDimmed : avatarButtonStyle}
+                                        onClick={() => handleImageUpdate("")}
+                                        disabled={isImgLoading}
+                                    >
+                                        Generate avatar
+                                    </button>
                                     </div>
                                     <FormDescription>
                                         Select the the model for generated images.
@@ -465,41 +534,41 @@ export const CompanionForm = ({
                         </div>
                         <Separator className="bg-primary/10" />
                     </div>
-                    
-                        <FormField
-                            name="name"
-                            control={form.control}
-                            render={({ field }) => (
-                                <FormItem className="col-span-2 md:col-span-1">
-                                    <FormLabel>Name</FormLabel>
-                                    <FormControl>
-                                        <Input disabled={isLoading} placeholder="Name" {...field} />
-                                    </FormControl>
-                                    <FormDescription>
-                                        This is how your AI Companion will be named.
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
 
-                        <FormField
-                            name="description"
-                            control={form.control}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Description</FormLabel>
-                                    <FormControl>
-                                        <Input disabled={isLoading} placeholder="girlfriend, etc.." {...field} />
-                                    </FormControl>
-                                    <FormDescription>
-                                        Short description of your AI Companion&apos;s type
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
+                    <FormField
+                        name="name"
+                        control={form.control}
+                        render={({ field }) => (
+                            <FormItem className="col-span-2 md:col-span-1">
+                                <FormLabel>Name</FormLabel>
+                                <FormControl>
+                                    <Input disabled={isLoading} placeholder="Name" {...field} />
+                                </FormControl>
+                                <FormDescription>
+                                    This is how your AI Companion will be named.
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
-                        />
+                    <FormField
+                        name="description"
+                        control={form.control}
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Description</FormLabel>
+                                <FormControl>
+                                    <Input disabled={isLoading} placeholder="girlfriend, etc.." {...field} />
+                                </FormControl>
+                                <FormDescription>
+                                    Short description of your AI Companion&apos;s type
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+
+                    />
 
                     <FormField
                         name="tags"
@@ -539,75 +608,113 @@ export const CompanionForm = ({
                             </FormItem>
                         )}
                     />
-                        
-                        <FormField
-                            control={form.control}
-                            name="model"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Model</FormLabel>
-                                    <Select disabled={isLoading} onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger className="bg-background">
-                                                <SelectValue defaultValue={field.value} placeholder="Select a llm model" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
 
+                    <FormField
+                        control={form.control}
+                        name="model"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Model</FormLabel>
+                                <Select disabled={isLoading} onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger className="bg-background">
+                                            <SelectValue defaultValue={field.value} placeholder="Select a llm model" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent style={{ maxHeight: "200px", overflowY: "auto" }}>
+                                        <SelectGroup>
+                                            <SelectLabel>--- Recommended Uncensored models (NSFW) ---</SelectLabel>
                                             <SelectItem key="NousResearch/Hermes-3-Llama-3.1-405B" value="NousResearch/Hermes-3-Llama-3.1-405B">Hermes-3-Llama-3.1-405B</SelectItem>
 
-                                            <SelectItem key="Sao10K/L3-70B-Euryale-v2.1" value="Sao10K/L3-70B-Euryale-v2.1">Euryale L3 70B</SelectItem>
-
+                                            <SelectItem key="Sao10K/L3.3-70B-Euryale-v2.3" value="Sao10K/L3.3-70B-Euryale-v2.3">Euryale L3.3 70B</SelectItem>
+                                            <SelectItem key="Sao10K/L3.1-70B-Euryale-v2.2" value="Sao10K/L3.1-70B-Euryale-v2.2">Euryale L3.1 70B</SelectItem>
+                                            <SelectSeparator />
+                                        </SelectGroup>
+                                        <SelectGroup>
+                                            <SelectLabel>--- Other Uncensored models (NSFW) ---</SelectLabel>
                                             <SelectItem key="NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO" value="NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO">Mixtral 8x7B DPO</SelectItem>
-                                            <SelectItem key="mistralai/Mixtral-8x22B-Instruct-v0.1" value="mistralai/Mixtral-8x22B-Instruct-v0.1">Mixtral 8x22B</SelectItem>
-                                            <SelectItem key="lizpreciatior/lzlv_70b_fp16_hf" value="lizpreciatior/lzlv_70b_fp16_hf">Lzlv 70B</SelectItem>
-                                            <SelectItem key="mistralai/Mistral-Nemo-Instruct-2407" value="mistralai/Mistral-Nemo-Instruct-2407">Mistral Nemo 12B</SelectItem>      
+                                            <SelectItem key="mistralai/Mistral-Small-24B-Instruct-2501" value="mistralai/Mistral-Small-24B-Instruct-2501">Mistral 24B</SelectItem>
+                                            <SelectItem key="Gryphe/MythoMax-L2-13b" value="Gryphe/MythoMax-L2-13b">Mythomax 13B</SelectItem>
+                                            <SelectSeparator />
+                                        </SelectGroup>
+                                        <SelectGroup>
+                                            <SelectLabel>--- Censored models (SFW) ---</SelectLabel>
+                                            <SelectItem key="meta-llama/Meta-Llama-3.1-405B-Instruct" value="meta-llama/Meta-Llama-3.1-405B-Instruct">Meta-Llama-3.1-405B</SelectItem>
+                                            <SelectItem key="nvidia/Llama-3.1-Nemotron-70B-Instruct" value="nvidia/Llama-3.1-Nemotron-70B-Instruct">Nvidia Nemotron 70B</SelectItem>
 
-                                            <SelectItem key="nvidia/Llama-3.1-Nemotron-70B-Instruct" value="nvidia/Llama-3.1-Nemotron-70B-Instruct">Nvidia Nemotron 70B</SelectItem>      
-                                            <SelectItem key="Gryphe/MythoMax-L2-13b" value="Gryphe/MythoMax-L2-13b">Mythomax 13B</SelectItem>      
-                                            <SelectItem key="meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo" value="meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo">Meta Llama 3.1 70B Turbo (SFW)</SelectItem>
-                                            <SelectItem key="meta-llama/Meta-Llama-3.1-405B-Instruct" value="meta-llama/Meta-Llama-3.1-405B-Instruct">Meta-Llama-3.1-405B (SFW)</SelectItem>
-                                            <SelectItem key="gpt-4o" value="gpt-4o">GPT-4o (SFW)</SelectItem>
+                                            <SelectItem key="meta-llama/Llama-3.3-70B-Instruct-Turbo" value="meta-llama/Llama-3.3-70B-Instruct-Turbo">Meta-Llama-3.3-70B</SelectItem>
 
-                                            <SelectItem key="gpt-4o-mini" value="gpt-4o-mini">GPT-4o-mini (SFW)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                            <SelectItem key="meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo" value="meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo">Meta Llama 3.1 70B Turbo</SelectItem>
+
+                                            <SelectItem key="gpt-4o" value="gpt-4o">GPT-4o</SelectItem>
+
+                                            <SelectItem key="gpt-4o-mini" value="gpt-4o-mini">GPT-4o-mini </SelectItem>
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                                <FormDescription>
+                                    Select the model for your AI.
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        name="nsfw"
+                        control={form.control}
+                        render={({ field }) => {
+                            // Remove the value property from the field object
+                            const { value, ...rest } = field;
+
+                            return (
+                                <FormItem>
+
+                                    <FormControl>
+                                        <FormLabel>NSFW &nbsp;
+                                            <input
+                                                type="checkbox"
+                                                {...rest} // Spread the rest of the field object into the input element's props
+                                                checked={value} // Use the value property to set the checked property
+                                                style={{ width: '16px', height: '16px', cursor: "pointer" }}
+                                            />
+                                        </FormLabel>
+                                    </FormControl>
                                     <FormDescription>
-                                        Select the model for your AI.
+                                        Check if your companion contains or produces nsfw content.
                                     </FormDescription>
                                     <FormMessage />
                                 </FormItem>
-                            )}
-                        />
-                        <FormField
-                            name="nsfw"
-                            control={form.control}
-                            render={({ field }) => {
-                                // Remove the value property from the field object
-                                const { value, ...rest } = field;
+                            );
+                        }}
+                    />
+                    <FormField
+                        name="cot_prompt"
+                        control={form.control}
+                        render={({ field }) => {
+                            // Remove the value property from the field object
+                            const { value, ...rest } = field;
 
-                                return (
-                                    <FormItem>
+                            return (
+                                <FormItem>
 
-                                        <FormControl>
-                                            <FormLabel>NSFW &nbsp;
-                                                <input
-                                                    type="checkbox"
-                                                    {...rest} // Spread the rest of the field object into the input element's props
-                                                    checked={value} // Use the value property to set the checked property
-                                                    style={{ width: '16px', height: '16px', cursor: "pointer" }}
-                                                />
-                                            </FormLabel>
-                                        </FormControl>
-                                        <FormDescription>
-                                            Check if your companion contains or produces nsfw content.
-                                        </FormDescription>
-                                        <FormMessage />
-                                    </FormItem>
-                                );
-                            }}
-                        />
-                    
+                                    <FormControl>
+                                        <FormLabel>Use Chain of Thought &nbsp;
+                                            <input
+                                                type="checkbox"
+                                                {...rest} // Spread the rest of the field object into the input element's props
+                                                checked={value} // Use the value property to set the checked property
+                                                style={{ width: '16px', height: '16px', cursor: "pointer" }}
+                                            />
+                                        </FormLabel>
+                                    </FormControl>
+                                    <FormDescription>
+                                        Check to use reasoning pre-prompt. May improve output but is slightly slower
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            );
+                        }}
+                    />
                     <div className="space-y-2 w-full">
                         <div>
                             <h3 className="text-lg font-medium">Configuration</h3>
@@ -652,7 +759,7 @@ export const CompanionForm = ({
                         control={form.control}
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Seed chat message</FormLabel>
+                                <FormLabel>Introduction chat message</FormLabel>
                                 <FormControl>
                                     <Input disabled={isLoading} placeholder={SEED_CHAT} {...field} />
                                 </FormControl>
@@ -669,7 +776,7 @@ export const CompanionForm = ({
                         </div>
                         <Separator className="bg-primary/10" />
                     </div>
-                    {/*
+
                     <FormField
                         control={form.control}
                         name="voiceId"
@@ -698,6 +805,7 @@ export const CompanionForm = ({
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                    {/*
                                     &nbsp;&nbsp;<button // Use a plain HTML button with type="button"
                                         type="button"
                                         className="btn-sm" // Add the appropriate button class
@@ -707,14 +815,15 @@ export const CompanionForm = ({
                                     >
                                         Play
                                     </button>
+                                    */}
                                 </div>
                                 <FormDescription>
-                                    Select a voice for your AI (&quot;none&quot; means voice is disabled)
+                                    Select a voice for your AI if you want voice messages to chat (&quot;none&quot; means voice is disabled)
                                 </FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )}
-                    /> */}
+                    />
                     <FormField
                         control={form.control}
                         name="phoneVoiceId"
@@ -752,7 +861,6 @@ export const CompanionForm = ({
                             </FormItem>
                         )}
                     />
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                             name="isPublic"
@@ -771,20 +879,19 @@ export const CompanionForm = ({
                                                     {...rest} // Spread the rest of the field object into the input element's props
                                                     checked={value} // Use the value property to set the checked property
                                                     style={{
-                                                        width: '14px',
-                                                        height: '14px',
+                                                        width: '16px',
+                                                        height: '16px',
                                                         backgroundColor: '#2d2d2d',
                                                         border: '2px solid #666',
                                                         borderRadius: '3px',
                                                         opacity: '0.8',
-                                                        cursor: 'not-allowed'
+                                                        cursor: 'pointer'
                                                     }}
-                                                    disabled
                                                 />
                                             </label>
                                         </FormControl>
                                         <FormDescription>
-                                            (New companions are public, other users can also talk to the character))
+                                            Show in public Companions, other users can also talk to the character)
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>

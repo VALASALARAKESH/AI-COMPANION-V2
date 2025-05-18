@@ -1,6 +1,6 @@
 "use client";
 import axios from "axios";
-import { ChevronLeft, Edit, MessagesSquare, MoreVertical, Trash, PhoneCall } from "lucide-react";
+import { ChevronLeft, Edit, MessagesSquare, MoreVertical, Trash, PhoneCall,Download, Copy } from "lucide-react"; // Added Copy import
 import { useRouter } from "next/navigation";
 import { Companion, Message } from "@prisma/client";
 import { useUser } from "@clerk/nextjs";
@@ -30,9 +30,9 @@ interface ChatHeaderProps {
 };
 
 export const ChatHeader = ({
-    isPro,
-    companion,
-}: ChatHeaderProps) => {
+                               isPro,
+                               companion,
+                           }: ChatHeaderProps) => {
     const router = useRouter();
     const { user } = useUser();
     const { toast } = useToast();
@@ -60,7 +60,7 @@ export const ChatHeader = ({
             toast({
                 description: "Chat history deleted successfully."
             });
-            window.location.reload(); 
+            window.location.reload();
             // You can perform any additional actions here after chat history deletion.
         } catch (error) {
             //console.log(error);
@@ -71,7 +71,7 @@ export const ChatHeader = ({
         }
     }
     const handlePhoneCallClick = () => {
-                setIsCallModalOpen(true);
+        setIsCallModalOpen(true);
     };
 
     const preserveQueryParams = (path: string) => {
@@ -79,15 +79,16 @@ export const ChatHeader = ({
             return path;
         }
         const params = new URLSearchParams(searchParams.toString());
+        //console.log(params.toString());
         return `${path}${params.toString() ? `?${params.toString()}` : ''}`;
     };
-    
+
     return (
         <div className="flex w-full justify-between items-center border-b border-primary/10 pb-1 py-1">
             <MobileSidebar isPro={isPro} />
             <div className="flex gap-x-2 items-center">
 
-                <BotAvatar src={companion.src} />
+
                 <div className="flex flex-col gap-y-1">
                     <div className="flex items-center gap-x-2">
                         <p className="font-bold">{companion.name}</p>
@@ -100,51 +101,78 @@ export const ChatHeader = ({
                     </p>
                 </div>
             </div>
-            <div className="flex items-center gap-x-2">                
-            {/* Button to open CallModal */}
+            <div className="flex items-center gap-x-2">
+                {/* Button to open CallModal */}
                 <Button onClick={handlePhoneCallClick} variant="secondary" size="icon">
                     <PhoneCall />
                 </Button>
-            {user?.id === companion.userId ? (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="secondary" size="icon">
-                            <MoreVertical />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => router.push((preserveQueryParams(`/companion/${companion.id}`)))} className="mb-2">
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={onDeleteChatHistory} className="mb-2">
-                            <Trash className="w-4 h-4 mr-2" />
-                            Delete Chat history
-                        </DropdownMenuItem>
+                {user?.id === companion.userId ? (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="secondary" size="icon">
+                                <MoreVertical />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => window.location.href = `/api/chat/${companion.id}/download-history`} className="mb-2">
+                                <Download className="w-4 h-4 mr-2" />
+                                Download HTML Chat History
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push((preserveQueryParams(`/companion/${companion.id}`)))} className="mb-2">
+                                <Edit className="w-4 h-4 mr-2" />
+                                Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={onDeleteChatHistory} className="mb-2">
+                                <Trash className="w-4 h-4 mr-2" />
+                                Delete Chat history
+                            </DropdownMenuItem>
 
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            ) : (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="secondary" size="icon">
-                            <MoreVertical />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={onDeleteChatHistory}>
-                            <Trash className="w-4 h-4 mr-2" />
-                            Delete Chat history
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                ) : (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="secondary" size="icon">
+                                <MoreVertical />
+                            </Button>
+                        </DropdownMenuTrigger>
+
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => window.location.href = `/api/chat/${companion.id}/download-history`}  className="mb-2">
+                                <Download className="w-4 h-4 mr-2" />
+                                Download HTML Chat History
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={async () => {
+                                try {
+                                    const response = await axios.post(`/api/companion/${companion.id}/fork`);
+                                    const forkedCompanion = response.data;
+                                    toast({
+                                        description: "Character forked successfully!"
+                                    });
+                                    router.push(`/companion/${forkedCompanion.id}`);
+                                } catch (error) {
+                                    toast({
+                                        variant: "destructive",
+                                        description: "Failed to fork character."
+                                    });
+                                }
+                            }} className="mb-2">
+                                <Copy className="w-4 h-4 mr-2" />
+                                Fork Character
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={onDeleteChatHistory}>
+                                <Trash className="w-4 h-4 mr-2" />
+                                Delete Chat history
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
             </div>
             {/* Call Modal */}
             <CallModal isOpen={isCallModalOpen} onClose={() => setIsCallModalOpen(false)} companionId={companion.id} companionName={companion.name} />
 
-            
+
         </div>
-        
+
     );
 };
